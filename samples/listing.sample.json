@@ -1,0 +1,25 @@
+{
+  "sku": "HEADPHONES-BLK-001",
+  "locale": "en_US",
+  "product": {
+    "title": "Premium Wireless Noise-Cancelling Headphones",
+    "description": "<p>Experience crystal-clear sound with our premium wireless headphones.</p><p>Features:</p><ul><li>40-hour battery life</li><li>Active noise cancellation</li><li>Bluetooth 5.3</li><li>Foldable design with carrying case</li></ul>",
+    "imageUrls": [
+      "https://example.com/images/headphones-front.jpg",
+      "https://example.com/images/headphones-side.jpg",
+      "https://example.com/images/headphones-case.jpg"
+    ],
+    "aspects": {
+      "Brand": ["AudioTech"],
+      "Type": ["Over-Ear"],
+      "Connectivity": ["Bluetooth", "Wireless"],
+      "Color": ["Black"]
+    }
+  },
+  "condition": "NEW",
+  "availability": {
+    "shipToLocationAvailability": {
+      "quantity": 50
+    }
+  }
+}
