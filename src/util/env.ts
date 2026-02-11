@@ -1,0 +1,61 @@
+/**
+ * Environment configuration utilities
+ */
+
+export interface EnvConfig {
+  gawainApiBase: string;
+  gawainApiKey: string;
+  gawainAppId: string;
+  kinosukeUpgradeUrl: string;
+  pollIntervalMs: number;
+  pollMaxAttempts: number;
+}
+
+const DEFAULT_POLL_INTERVAL_MS = 2000;
+const DEFAULT_POLL_MAX_ATTEMPTS = 60;
+
+function getRequired(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
+function getOptional(name: string, defaultValue: string): string {
+  return process.env[name] || defaultValue;
+}
+
+function getOptionalNumber(name: string, defaultValue: number): number {
+  const value = process.env[name];
+  if (!value) return defaultValue;
+  const parsed = parseInt(value, 10);
+  if (isNaN(parsed)) {
+    throw new Error(`Invalid numeric value for ${name}: ${value}`);
+  }
+  return parsed;
+}
+
+/**
+ * Load and validate environment configuration
+ */
+export function loadEnvConfig(): EnvConfig {
+  return {
+    gawainApiBase: getRequired('GAWAIN_API_BASE'),
+    gawainApiKey: getOptional('GAWAIN_API_KEY', ''),
+    gawainAppId: getOptional('GAWAIN_APP_ID', ''),
+    kinosukeUpgradeUrl: getOptional('KINOSUKE_UPGRADE_URL', 'https://kinosuke.example.com/upgrade'),
+    pollIntervalMs: getOptionalNumber('GAWAIN_POLL_INTERVAL_MS', DEFAULT_POLL_INTERVAL_MS),
+    pollMaxAttempts: getOptionalNumber('GAWAIN_POLL_MAX_ATTEMPTS', DEFAULT_POLL_MAX_ATTEMPTS),
+  };
+}
+
+/**
+ * Mask sensitive values for logging
+ */
+export function maskSecret(value: string, visibleChars = 4): string {
+  if (value.length <= visibleChars * 2) {
+    return '****';
+  }
+  return value.slice(0, visibleChars) + '****' + value.slice(-visibleChars);
+}
