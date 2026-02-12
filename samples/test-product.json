@@ -1,0 +1,20 @@
+{
+  "sku": "GAWAIN_TEST_001",
+  "locale": "en_US",
+  "product": {
+    "title": "Gawain AI Test Product",
+    "description": "Test product for eBay plugin integration testing",
+    "imageUrls": [
+      "https://gawain.nogeass.com/ogp.jpg"
+    ],
+    "aspects": {
+      "Brand": ["Gawain"]
+    }
+  },
+  "condition": "NEW",
+  "availability": {
+    "shipToLocationAvailability": {
+      "quantity": 1
+    }
+  }
+}
