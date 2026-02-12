@@ -11,6 +11,7 @@
     "demo": "tsx --env-file=.env src/demo.ts",
     "serve": "tsx --env-file=.env src/server.ts",
     "ebay:auth": "tsx --env-file=.env src/auth-cli.ts",
+    "ebay:video": "tsx --env-file=.env scripts/ebay-to-video.ts",
     "sandbox:seller:setup": "tsx --env-file=.env scripts/validate-test-user-registration.ts",
     "sandbox:seller:check": "tsx --env-file=.env scripts/check-privileges.ts",
     "sandbox:seller:setup-and-check": "tsx --env-file=.env scripts/validate-test-user-registration.ts && tsx --env-file=.env scripts/check-privileges.ts",
