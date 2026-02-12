@@ -42,6 +42,59 @@ if (validateEbayItem(listing)) {
 }
 ```
 
+## eBay OAuth (Sandbox)
+
+Authenticate with eBay to get a user access token. Required for Sell API calls.
+
+### Setup
+
+1. Register an app at [eBay Developer Portal](https://developer.ebay.com/)
+2. Set your "Auth'n'Auth" redirect URL (RuName) to `http://localhost:3457/oauth/ebay/callback`
+3. Copy credentials to `.env`:
+
+```bash
+cp .env.example .env
+# Edit .env:
+#   EBAY_ENV=sandbox
+#   EBAY_CLIENT_ID=your_sandbox_client_id
+#   EBAY_CLIENT_SECRET=your_sandbox_client_secret
+#   EBAY_REDIRECT_URI=http://localhost:3457/oauth/ebay/callback
+```
+
+### CLI Flow (recommended)
+
+```bash
+npm run ebay:auth
+```
+
+This will:
+1. Display the eBay consent URL
+2. Start a local callback server
+3. Wait for you to authorize in the browser
+4. Exchange the code for tokens
+5. Save tokens to `.ebay_tokens.json`
+6. Test the Sell Inventory API
+
+### HTTP Flow (alternative)
+
+```bash
+# Start the server
+npm run serve
+
+# Open in browser
+open http://localhost:3457/oauth/ebay/login
+# -> Redirects to eBay -> Callback saves tokens automatically
+```
+
+### Using the token programmatically
+
+```typescript
+import { getValidAccessToken, loadEbayOAuthConfig } from 'gawain-ebay-plugin';
+
+const config = loadEbayOAuthConfig();
+const token = await getValidAccessToken(config); // auto-refreshes if expired
+```
+
 ## eBay Video Upload
 
 ```typescript
@@ -98,9 +151,10 @@ curl -X POST http://localhost:3457/demo/create-preview \
 ```
 src/
   gawain/          # Gawain API client (shared with Shopify plugin)
-  platform/ebay/   # eBay-specific conversion, fetching, and video upload
+  platform/ebay/   # eBay-specific conversion, fetching, video upload, OAuth
   install/         # Anonymous install_id management
   util/            # Retry logic, environment config
+  auth-cli.ts      # eBay OAuth CLI (npm run ebay:auth)
   demo.ts          # CLI demo
   server.ts        # HTTP wrapper (port 3457)
   index.ts         # Public API exports

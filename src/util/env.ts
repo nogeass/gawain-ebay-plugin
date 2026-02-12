@@ -59,3 +59,40 @@ export function maskSecret(value: string, visibleChars = 4): string {
   }
   return value.slice(0, visibleChars) + '****' + value.slice(-visibleChars);
 }
+
+/**
+ * eBay OAuth configuration
+ */
+export interface EbayOAuthConfig {
+  env: 'sandbox' | 'production';
+  clientId: string;
+  clientSecret: string;
+  redirectUri: string;
+  scopes: string[];
+  ruName?: string;
+  tokenFilePath: string;
+}
+
+const DEFAULT_EBAY_SCOPES = [
+  'https://api.ebay.com/oauth/api_scope/sell.inventory',
+  'https://api.ebay.com/oauth/api_scope/sell.marketing',
+  'https://api.ebay.com/oauth/api_scope/sell.account',
+];
+
+/**
+ * Load eBay OAuth configuration from environment variables
+ */
+export function loadEbayOAuthConfig(): EbayOAuthConfig {
+  const env = getOptional('EBAY_ENV', 'sandbox') as 'sandbox' | 'production';
+  return {
+    env,
+    clientId: getRequired('EBAY_CLIENT_ID'),
+    clientSecret: getRequired('EBAY_CLIENT_SECRET'),
+    redirectUri: getRequired('EBAY_REDIRECT_URI'),
+    scopes: process.env.EBAY_SCOPES
+      ? process.env.EBAY_SCOPES.split(' ').filter(Boolean)
+      : DEFAULT_EBAY_SCOPES,
+    ruName: process.env.EBAY_RU_NAME || undefined,
+    tokenFilePath: getOptional('EBAY_TOKEN_FILE', '.ebay_tokens.json'),
+  };
+}
