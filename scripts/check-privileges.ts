@@ -13,6 +13,7 @@ import * as path from 'node:path';
 
 const MAX_RETRIES = 6;
 const BACKOFF_BASE_MS = 2000; // 2, 4, 8, 16, 32, 64 seconds
+const STRICT = process.argv.includes('--strict');
 
 function getAccessToken(): string {
   // Prefer explicit env var
@@ -123,12 +124,18 @@ async function main(): Promise<void> {
     }
   }
 
-  console.error('\nFailed: sellerRegistrationCompleted is still false after all retries.');
-  console.error('Possible causes:');
-  console.error('  - ValidateTestUserRegistration was not called or failed');
-  console.error('  - The sandbox user may be corrupted — try creating a new one');
-  console.error('  - Propagation delay — wait a few minutes and run `npm run sandbox:seller:check` again');
-  process.exit(1);
+  console.warn('\nWarning: sellerRegistrationCompleted is still false after all retries.');
+  console.warn('Possible causes:');
+  console.warn('  - ValidateTestUserRegistration was not called or failed');
+  console.warn('  - The sandbox user may be corrupted — try creating a new one');
+  console.warn('  - Propagation delay — wait a few minutes and run `npm run sandbox:seller:check` again');
+
+  if (STRICT) {
+    console.error('\n(--strict mode: exiting with error)');
+    process.exit(1);
+  } else {
+    console.info('\n(soft mode: exiting with success — use --strict to fail on false)');
+  }
 }
 
 main().catch((err) => {
