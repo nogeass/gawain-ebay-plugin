@@ -47,6 +47,7 @@ export async function fetchInventoryItems(
       headers: {
         'Authorization': `Bearer ${opts.accessToken}`,
         'Content-Type': 'application/json',
+        'Accept-Language': 'en-US',
       },
     },
   );
@@ -84,6 +85,7 @@ export async function fetchOffers(
       headers: {
         'Authorization': `Bearer ${opts.accessToken}`,
         'Content-Type': 'application/json',
+        'Accept-Language': 'en-US',
       },
     },
   );

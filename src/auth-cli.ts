@@ -121,6 +121,7 @@ async function main(): Promise<void> {
             headers: {
               'Authorization': `Bearer ${tokenData.access_token}`,
               'Content-Type': 'application/json',
+              'Accept-Language': 'en-US',
             },
           },
         );
