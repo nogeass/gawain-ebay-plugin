@@ -77,7 +77,27 @@ npm run sandbox:seller:setup-and-check
 | `Auth token invalid / expired` | OAuth token expired | Run `npm run ebay:auth` to re-authenticate |
 | `User not found / invalid user` | Wrong sandbox user | Sandbox usernames must have `TESTUSER_` prefix |
 | `Access denied / Request not allowed` | Wrong endpoint or Site ID | Verify `EBAY_ENV=sandbox` and `EBAY_SITE_ID=0` |
-| `sellerRegistrationCompleted` stays `false` | Propagation delay or corrupted user | Wait a few minutes and retry, or create a new sandbox test user |
+
+### `Ack: Success` なのに `sellerRegistrationCompleted` が `false` のまま
+
+これは**正常な挙動**です。eBay Sandbox では `ValidateTestUserRegistration` が成功しても、`getPrivileges` に反映されるまで時間がかかる（数分〜数時間、または永久に反映されない）ケースがあります。
+
+**再チェック方法:**
+
+```bash
+npm run sandbox:seller:check
+```
+
+スクリプトは自動で 6回リトライ（2〜64秒の指数バックオフ）します。
+しばらく待ってから再実行してください。
+
+**それでもダメな場合:**
+
+1. eBay Developer Portal > Sandbox > Test Users から**新しいテストユーザーを作成**
+2. `npm run ebay:auth` で新ユーザーの OAuth トークンを取得
+3. `npm run sandbox:seller:setup-and-check` を再実行
+
+Sandbox のテストユーザーは使い捨てと割り切るのが最も効率的です。
 
 ## How it works
 
