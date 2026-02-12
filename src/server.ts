@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 /**
- * Optional HTTP wrapper for gawain-ebay-plugin
+ * HTTP wrapper for gawain-ebay-plugin
  *
  * Endpoints:
  *   POST /convert              — eBay listing JSON -> GawainJobInput (stateless)
  *   POST /demo/create-preview  — Create a Gawain job (free preview without API key)
+ *   GET  /oauth/ebay/login     — Start eBay OAuth flow (redirect to eBay)
+ *   GET  /oauth/ebay/callback  — eBay OAuth callback (exchange code, save tokens)
  *
- * This server does NOT handle eBay OAuth tokens.
  * Usage: npm run serve
  */
 
@@ -14,7 +15,17 @@ import * as http from 'node:http';
 import { toGawainJobInput, validateEbayItem } from './platform/ebay/convert.js';
 import type { ConvertOptions } from './platform/ebay/types.js';
 import { GawainClient, createConfigFromEnv } from './gawain/client.js';
-import { loadEnvConfig } from './util/env.js';
+import { loadEnvConfig, loadEbayOAuthConfig } from './util/env.js';
+import {
+  buildConsentUrl,
+  generateState,
+  exchangeCodeForTokens,
+} from './platform/ebay/oauth.js';
+import {
+  saveState,
+  readState,
+  saveTokenData,
+} from './platform/ebay/token-store.js';
 
 const PORT = parseInt(process.env.PORT || '3457', 10);
 
@@ -36,6 +47,11 @@ function parseBody(req: http.IncomingMessage): Promise<unknown> {
 function sendJson(res: http.ServerResponse, status: number, body: unknown): void {
   res.writeHead(status, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(body));
+}
+
+function sendHtml(res: http.ServerResponse, status: number, html: string): void {
+  res.writeHead(status, { 'Content-Type': 'text/html' });
+  res.end(html);
 }
 
 async function handleConvert(
@@ -80,12 +96,86 @@ async function handleCreatePreview(
   sendJson(res, 201, job);
 }
 
+function handleOAuthLogin(
+  _req: http.IncomingMessage,
+  res: http.ServerResponse,
+): void {
+  let config;
+  try {
+    config = loadEbayOAuthConfig();
+  } catch {
+    sendJson(res, 500, { error: 'eBay OAuth not configured. Set EBAY_CLIENT_ID, EBAY_CLIENT_SECRET, EBAY_REDIRECT_URI in .env' });
+    return;
+  }
+
+  const state = generateState();
+  saveState(config.tokenFilePath, config.env, state);
+
+  const url = buildConsentUrl(config, state);
+  res.writeHead(302, { Location: url });
+  res.end();
+}
+
+async function handleOAuthCallback(
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+): Promise<void> {
+  const reqUrl = new URL(req.url || '/', `http://localhost:${PORT}`);
+  const code = reqUrl.searchParams.get('code');
+  const returnedState = reqUrl.searchParams.get('state');
+  const error = reqUrl.searchParams.get('error');
+
+  if (error) {
+    const desc = reqUrl.searchParams.get('error_description') || error;
+    sendHtml(res, 400, `<h1>Authorization Failed</h1><p>${desc}</p>`);
+    return;
+  }
+
+  if (!code || !returnedState) {
+    sendHtml(res, 400, '<h1>Missing code or state parameter</h1>');
+    return;
+  }
+
+  let config;
+  try {
+    config = loadEbayOAuthConfig();
+  } catch {
+    sendJson(res, 500, { error: 'eBay OAuth not configured' });
+    return;
+  }
+
+  // Verify state
+  const savedState = readState(config.tokenFilePath);
+  if (returnedState !== savedState) {
+    sendHtml(res, 403, '<h1>State mismatch</h1><p>Possible CSRF attack. Try again.</p>');
+    return;
+  }
+
+  // Exchange code for tokens
+  const tokenData = await exchangeCodeForTokens(config, code);
+  saveTokenData(config.tokenFilePath, config, tokenData);
+
+  sendHtml(res, 200, `
+    <html><body style="font-family: sans-serif; padding: 2em; text-align: center;">
+      <h1>Authorization Successful</h1>
+      <p>Tokens saved to <code>${config.tokenFilePath}</code></p>
+      <p>You can close this window.</p>
+    </body></html>
+  `);
+}
+
 const server = http.createServer(async (req, res) => {
   try {
-    if (req.method === 'POST' && req.url === '/convert') {
+    const url = new URL(req.url || '/', `http://localhost:${PORT}`);
+
+    if (req.method === 'POST' && url.pathname === '/convert') {
       await handleConvert(req, res);
-    } else if (req.method === 'POST' && req.url === '/demo/create-preview') {
+    } else if (req.method === 'POST' && url.pathname === '/demo/create-preview') {
       await handleCreatePreview(req, res);
+    } else if (req.method === 'GET' && url.pathname === '/oauth/ebay/login') {
+      handleOAuthLogin(req, res);
+    } else if (req.method === 'GET' && url.pathname === '/oauth/ebay/callback') {
+      await handleOAuthCallback(req, res);
     } else {
       sendJson(res, 404, { error: 'Not found' });
     }
@@ -96,4 +186,6 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.info(`gawain-ebay-plugin server listening on port ${PORT}`);
+  console.info(`  OAuth login:    http://localhost:${PORT}/oauth/ebay/login`);
+  console.info(`  OAuth callback: http://localhost:${PORT}/oauth/ebay/callback`);
 });

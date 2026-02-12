@@ -30,6 +30,24 @@ export {
   buildUpgradeUrl,
 } from './install/install_id.js';
 
+// --- eBay OAuth ---
+export {
+  buildConsentUrl,
+  exchangeCodeForTokens,
+  refreshAccessToken,
+  generateState,
+  getApiBase,
+  getAuthBase,
+  type EbayTokenData,
+} from './platform/ebay/oauth.js';
+export {
+  readTokens,
+  writeTokens,
+  saveTokenData,
+  getValidAccessToken,
+  type StoredTokens,
+} from './platform/ebay/token-store.js';
+
 // --- Utilities ---
-export { loadEnvConfig, maskSecret, type EnvConfig } from './util/env.js';
+export { loadEnvConfig, loadEbayOAuthConfig, maskSecret, type EnvConfig, type EbayOAuthConfig } from './util/env.js';
 export { withRetry, sleep, isRetryableError, type RetryOptions } from './util/retry.js';
